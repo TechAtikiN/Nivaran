@@ -11,47 +11,30 @@ import {
 import { useAddress, useContract, useOwnedNFTs } from '@thirdweb-dev/react'
 import { EllipsisHorizontalIcon } from '@heroicons/react/24/solid'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import { useHandleComplaintStore } from '@/store/useUserStore'
+
 // default imports
 import RegisterFIRForm from './RegisterFIRForm'
 import Loading from '../globals/Loading'
 import UpdateFIRForm from './UpdateFIRForm'
 import FIRDetail from '../globals/FIRDetail'
-import { useHandleComplaintStore } from '@/store/useUserStore'
 
 const FIRTable = () => {
-  const [complaint] = useHandleComplaintStore((state) => [state.complaint])
   const address = useAddress()
+
+  const [complaint] = useHandleComplaintStore((state) => [state.complaint])
   const [selectedStatus, setSelectedStatus] = useState('New')
 
-  // loading contracts
-  const { contract: newFIRsCollection } = useContract(process.env.NEXT_PUBLIC_FIR_CREATED_CONTRACT_ADDRESS)
-  const { contract: pendingFIRsCollection } = useContract(process.env.NEXT_PUBLIC_FIR_PENDING_CONTRACT_ADDRESS)
-  const { contract: resolvedFIRsCollection } = useContract(process.env.NEXT_PUBLIC_FIR_RESOLVED_CONTRACT_ADDRESS)
+  const { contract: FIRCollection } = useContract(process.env.NEXT_PUBLIC_FIR_CONTRACT)
+  const { data: FIRsData, isLoading: FIRsDataLoading } = useOwnedNFTs(FIRCollection, address)
 
-  // loading NFTs
-  const { data: newFIRsData, isLoading: newFIRsDataLoading } = useOwnedNFTs(newFIRsCollection, address)
-  const { data: pendingFIRsData, isLoading: pendingFIRsDataLoading } = useOwnedNFTs(pendingFIRsCollection, address)
-  const { data: resolvedFIRsData, isLoading: resolvedFIRsDataLoading } = useOwnedNFTs(resolvedFIRsCollection, address)
+  if (FIRsDataLoading) return <Loading />
 
-  let newFIRsMetadata: FIR[] = []
-  let pendingFIRsMetadata: FIR[] = []
-  let resolvedFIRsMetadata: FIR[] = []
+  let FIRsMetadata: FIR[] = []
 
-  if (newFIRsDataLoading || pendingFIRsDataLoading || resolvedFIRsDataLoading)
-    return <Loading />
-
-  // mapping NFTs to get metadata
-  newFIRsData?.map(async (fir: any) => {
+  FIRsData?.map(async (fir: any) => {
     const data = fir.metadata
-    newFIRsMetadata.push(data)
-  })
-  pendingFIRsData?.map(async (fir: any) => {
-    const data = fir.metadata
-    pendingFIRsMetadata.push(data)
-  })
-  resolvedFIRsData?.map(async (fir: any) => {
-    const data = fir.metadata
-    resolvedFIRsMetadata.push(data)
+    FIRsMetadata.push(data)
   })
 
   return (
@@ -81,10 +64,10 @@ const FIRTable = () => {
           </thead>
 
           <tbody className='h-[10px] overflow-x-auto overflow-y-scroll'>
-            {
-              (selectedStatus === 'New' ? newFIRsMetadata :
-                selectedStatus === 'Pending' ? pendingFIRsMetadata :
-                  resolvedFIRsMetadata)?.map((fir, index: number) => (
+            {FIRsMetadata.length > 0 ? (
+              FIRsMetadata?.map((fir: FIR, index) => {
+                if (fir.properties.status === selectedStatus) {
+                  return (
                     <tr
                       key={fir.id}
                       className={`w-full border-l border-gray-300 hover:cursor-pointer ${index % 2 === 1 ? 'bg-sky-50' : 'bg-white'} text-sm border-b border-gray-300`}
@@ -117,10 +100,11 @@ const FIRTable = () => {
                           <PopoverTrigger>
                             <EllipsisHorizontalIcon className='h-6 w-6' />
                           </PopoverTrigger>
-                          <PopoverContent className='w-36'>
+                          <PopoverContent className='w-36 -p-2'>
 
                             <Dialog>
-                              <DialogTrigger className='w-full mb-1 bg-gray-100 hover:bg-gray-300 text-left p-1 text-sm rounded-sm'>
+                              <DialogTrigger
+                                className='w-full p-2 hover:bg-gray-100 text-left  text-sm rounded-sm'>
                                 <p className='text-center'>View FIR</p>
                               </DialogTrigger>
                               <DialogContent>
@@ -131,16 +115,15 @@ const FIRTable = () => {
                                   </DialogDescription>
                                 </DialogHeader>
                                 <FIRDetail
-                                  newFIRsMetadata={newFIRsMetadata}
-                                  pendingFIRsMetadata={pendingFIRsMetadata}
-                                  resolvedFIRsMetadata={resolvedFIRsMetadata}
-                                  fir={fir} />
+                                  fir={fir}
+                                  selectedStatus={selectedStatus}
+                                />
                               </DialogContent>
                             </Dialog>
 
                             <Dialog>
                               {selectedStatus !== 'Resolved' && (
-                                <DialogTrigger className='w-full bg-gray-200 hover:bg-gray-300 text-left p-1 text-sm rounded-sm'>
+                                <DialogTrigger className='w-full p-2 hover:bg-gray-100 text-left  text-sm rounded-sm'>
                                   <p className='text-center'>Update Status</p>
                                 </DialogTrigger>
                               )}
@@ -161,9 +144,14 @@ const FIRTable = () => {
                           </PopoverContent>
                         </Popover>
                       </td>
-
                     </tr>
-                  ))}
+                  )
+                }
+              })) : (
+              <tr>
+                <td className='text-center' colSpan={6}>No FIRs found</td>
+              </tr>
+            )}
           </tbody>
         </table>
 

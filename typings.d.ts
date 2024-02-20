@@ -45,7 +45,7 @@ type Officer = {
 };
 
 type Complaint = {
-    complaintId: number;
+    complaintId: string;
     walletAddress: string;
     name: string;
     contact: string;

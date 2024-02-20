@@ -18,7 +18,6 @@ const PoliceDashboard = () => {
             <CrimeRateGraph />
             <CriminalRegions />
           </div>
-
         </div>
 
       </div>

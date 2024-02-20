@@ -22,7 +22,7 @@ export default function Home() {
   const [role, setRole] = userUserStore(state => [state.role, state.setRole])
 
   // define contracts for police and citizen NFTs
-  const { contract: policeCollection } = useContract(process.env.NEXT_PUBLIC_POLICE_NFT_CONTRACT_ADDRESS)
+  const { contract: policeCollection } = useContract(process.env.NEXT_PUBLIC_POLICE_CONTRACT)
   const { data: policeAccessNFTs, isLoading: policeAccessDataLoading } = useOwnedNFTs(policeCollection, address)
 
 
@@ -32,7 +32,7 @@ export default function Home() {
       router.push('/login')
     }
 
-    if (process.env.NEXT_PUBLIC_ADMIN_WALLET_ADDRESS === address) {
+    if (process.env.NEXT_PUBLIC_ADMIN_ADDRESS === address) {
       setRole(Role.ADMIN)
     } else if (policeAccessNFTs && policeAccessNFTs?.length > 0) {
       setRole(Role.POLICE)
@@ -47,7 +47,7 @@ export default function Home() {
     return <Loading />
   }
 
-  if (process.env.NEXT_PUBLIC_ADMIN_WALLET_ADDRESS === address) {
+  if (process.env.NEXT_PUBLIC_ADMIN_ADDRESS === address) {
     router.push('/admin')
   }
 

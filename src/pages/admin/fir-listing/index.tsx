@@ -1,8 +1,7 @@
-import { useAddress, useContract, useNFTs } from '@thirdweb-dev/react'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useHandleComplaintStore } from '@/store/useUserStore'
+import { useContract, useNFTs } from '@thirdweb-dev/react'
+import { useState } from 'react'
 import { EllipsisHorizontalIcon } from '@heroicons/react/24/outline'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Dialog,
   DialogContent,
@@ -16,47 +15,23 @@ import Loading from '@/components/globals/Loading'
 import FIRDetail from '@/components/globals/FIRDetail'
 
 const FIRListing = () => {
-  const [complaint] = useHandleComplaintStore((state) => [state.complaint])
   const [selectedStatus, setSelectedStatus] = useState('New')
-  const address = useAddress()
-  const router = useRouter()
 
-  // loading contracts
-  const { contract: newFIRsCollection } = useContract(process.env.NEXT_PUBLIC_FIR_CREATED_CONTRACT_ADDRESS)
-  const { contract: pendingFIRsCollection } = useContract(process.env.NEXT_PUBLIC_FIR_PENDING_CONTRACT_ADDRESS)
-  const { contract: resolvedFIRsCollection } = useContract(process.env.NEXT_PUBLIC_FIR_RESOLVED_CONTRACT_ADDRESS)
+  const { contract: FIRCollection } = useContract(process.env.NEXT_PUBLIC_FIR_CONTRACT)
 
-  // loading NFTs
-  const { data: newFIRsData, isLoading: newFIRsDataLoading } = useNFTs(newFIRsCollection)
-  const { data: pendingCollectionData, isLoading: pendingFIRsDataLoading } = useNFTs(pendingFIRsCollection)
-  const { data: resolvedFIRsData, isLoading: resolvedFIRsDataLoading } = useNFTs(resolvedFIRsCollection)
+  const { data: FIRsData, isLoading: FIRsDataLoading } = useNFTs(FIRCollection)
 
-  let newFIRsMetadata: FIR[] = []
-  let pendingFIRsMetadata: FIR[] = []
-  let resolvedFIRsMetadata: FIR[] = []
+  if (FIRsDataLoading) return <Loading />
 
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_ADMIN_WALLET_ADDRESS !== address) {
-      router.push('/login')
+  let FIRsMetadata: FIR[] = []
+
+  FIRsData?.map(async (fir: any) => {
+    if (fir.owner !== '0x0000000000000000000000000000000000000000') {
+      const data = fir.metadata
+      FIRsMetadata.push(data)
+    } else {
+      console.log('no data')
     }
-  }, [address])
-
-
-  if (newFIRsDataLoading || pendingFIRsDataLoading || resolvedFIRsDataLoading)
-    return <Loading />
-
-  // mapping NFTs to get metadata
-  newFIRsData?.map(async (fir: any) => {
-    const data = fir.metadata
-    newFIRsMetadata.push(data)
-  })
-  pendingCollectionData?.map(async (fir: any) => {
-    const data = fir.metadata
-    pendingFIRsMetadata.push(data)
-  })
-  resolvedFIRsData?.map(async (fir: any) => {
-    const data = fir.metadata
-    resolvedFIRsMetadata.push(data)
   })
 
   return (
@@ -77,39 +52,38 @@ const FIRListing = () => {
             <button onClick={() => setSelectedStatus('Resolved')} className={`badge-btn ${selectedStatus === 'Resolved' ? 'bg-sky-100' : 'bg-white'}`}>Resolved</button>
           </div>
 
-          <div className=''>
-            <table className='w-full mt-7'>
-              <thead className='w-full border-b border-gray-300'>
-                <tr className='bg-slate-800'>
-                  <th className='table-header rounded-tl-lg'>FIR ID.</th>
-                  <th className='table-header'>Victim Name</th>
-                  <th className='table-header'>Victim Contact</th>
-                  <th className='table-header'>Wallet Address</th>
-                  <th className='table-header'>Status</th>
-                  <th className='table-header rounded-tr-lg'>Actions</th>
-                </tr>
-              </thead>
+          <table className='w-full mt-7'>
+            <thead className='w-full border-b border-gray-300'>
+              <tr className='bg-slate-800'>
+                <th className='table-header rounded-tl-lg'>FIR ID.</th>
+                <th className='table-header'>Victim Name</th>
+                <th className='table-header'>Victim Contact</th>
+                <th className='table-header'>Wallet Address</th>
+                <th className='table-header'>Status</th>
+                <th className='table-header rounded-tr-lg'>Actions</th>
+              </tr>
+            </thead>
 
-              <tbody className=''>
-                {(selectedStatus === 'New' ? newFIRsMetadata :
-                  selectedStatus === 'Pending' ? pendingFIRsMetadata :
-                    resolvedFIRsMetadata)?.filter((fir) => {
-                      return fir.properties.firId !== undefined
-                    }).map((fir, index: number) => (
+            <tbody className='h-[10px] overflow-x-auto overflow-y-scroll'>
+              {FIRsMetadata.length > 0 ? (
+                FIRsMetadata?.map((fir: FIR, index) => {
+                  console.log(fir)
+                  if (fir.properties.status === selectedStatus) {
+                    return (
                       <tr
-                        key={fir.id}
-                        className={`w-full border-x border-gray-300 hover:cursor-pointer ${index % 2 === 1 ? 'bg-sky-50' : 'bg-white'} text-sm border-b border-gray-300`}
+                        key={fir?.id}
+                        className={`w-full border-l border-gray-300 hover:cursor-pointer ${index % 2 === 1 ? 'bg-sky-50' : 'bg-white'} text-sm border-b border-gray-300`}
                       >
                         <td className='table-data'>
-                          {fir.properties?.firId?.slice(0, 6)}...{fir.properties?.firId?.slice(-6)}
+                          {fir?.properties?.firId.slice(0, 6)}...{fir.properties.firId.slice(-6)}
                         </td>
                         <td className='table-data text-sm'>
-                          <p>{fir.properties?.name}</p>
-                          <p className='text-xs'>{fir.properties?.email}</p>
+                          <p>{fir?.properties?.name}</p>
+                          <p className='text-xs'>{fir?.properties?.email}</p>
                         </td>
-                        <td className='table-data'>{fir.properties?.contact}</td>
+                        <td className='table-data'>{fir?.properties?.contact}</td>
                         <td className='table-data'>
-                          {fir.properties?.walletAddress.slice(0, 6)}...{fir.properties?.walletAddress.slice(-6)}
+                          {fir?.properties?.walletAddress.slice(0, 6)}...{fir?.properties?.walletAddress.slice(-6)}
                         </td>
                         <td className='table-data'>
                           <span
@@ -121,33 +95,46 @@ const FIRListing = () => {
                             {selectedStatus}
                           </span>
                         </td>
-
-                        <td className='table-data'>
-                          <Dialog>
-                            <DialogTrigger className='hover:bg-gray-100 text-left p-1 text-sm rounded-md'>
+                        <td
+                          onClick={(e) => e.stopPropagation()}
+                          className='table-data border-r border-gray-300'>
+                          <Popover>
+                            <PopoverTrigger>
                               <EllipsisHorizontalIcon className='h-6 w-6' />
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader className='-mb-10 text-gray-700 rounded-md p-1 m-1'>
-                                <DialogTitle className='text-center font-semibold text-xl'>FIR Details</DialogTitle>
-                                <DialogDescription>
-                                  <p className='font-bold text-black  text-center -mb-8'>FIR ID: {fir?.properties?.firId}</p>
-                                </DialogDescription>
-                              </DialogHeader>
-                              <FIRDetail
-                                newFIRsMetadata={newFIRsMetadata}
-                                pendingFIRsMetadata={pendingFIRsMetadata}
-                                resolvedFIRsMetadata={resolvedFIRsMetadata}
-                                fir={fir} />
-                            </DialogContent>
-                          </Dialog>
+                            </PopoverTrigger>
+                            <PopoverContent className='w-36 -p-2'>
+
+                              <Dialog>
+                                <DialogTrigger
+                                  className='w-full p-2 hover:bg-gray-100 text-left  text-sm rounded-sm'>
+                                  <p className='text-center'>View FIR</p>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader className='-mb-10 p-1 m-1'>
+                                    <DialogTitle className='text-center font-semibold text-xl'>FIR Details</DialogTitle>
+                                    <DialogDescription>
+                                      <p className='font-bold text-black text-center -mb-8'>FIR ID: {fir?.properties?.firId}</p>
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <FIRDetail
+                                    fir={fir}
+                                    selectedStatus={selectedStatus}
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                            </PopoverContent>
+                          </Popover>
                         </td>
                       </tr>
-                    ))}
-              </tbody>
-            </table>
-          </div>
-
+                    )
+                  }
+                })) : (
+                <tr>
+                  <td className='text-center' colSpan={6}>No FIRs found</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </DashboardLayout>

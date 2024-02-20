@@ -1,6 +1,7 @@
 // named imports
+import { useRouter } from 'next/router'
 import { AddOfficerForm } from '@/components/admin/AddOfficerForm'
-import { NFT, useContract } from '@thirdweb-dev/react'
+import { NFT, useAddress, useContract } from '@thirdweb-dev/react'
 import { useEffect, useState } from 'react'
 // default imports
 import OfficerListing from '@/components/admin/OfficerListing'
@@ -9,7 +10,14 @@ import Loading from '../globals/Loading'
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(false)
   let [policeOfficers, setPoliceOfficers] = useState<NFT[]>([])
-  const { contract: policeCollection, isLoading: policeCollectionLoading } = useContract(process.env.NEXT_PUBLIC_POLICE_NFT_CONTRACT_ADDRESS)
+  const address = useAddress()
+
+  const { contract: policeCollection, isLoading: policeCollectionLoading } = useContract(process.env.NEXT_PUBLIC_POLICE_CONTRACT)
+
+  const router = useRouter()
+  if (address === undefined) {
+    router.push('/login')
+  }
 
   useEffect(() => {
     const fetchNFTs = async () => {

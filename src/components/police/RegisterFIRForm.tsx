@@ -14,9 +14,11 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { v4 as uuidv4 } from 'uuid';
 
+
 interface Props {
   complaint: Complaint
 }
+
 type FormValues = {
   name: string
   email: string
@@ -34,8 +36,9 @@ const FIR_THUMBNAIL = 'https://e-gmat.com/blogs/wp-content/uploads/2021/04/f1-vi
 
 const RegisterFIRForm = ({ complaint }: Props) => {
   const address = useAddress()
-  const { contract: newFIRCollection } = useContract(process.env.NEXT_PUBLIC_FIR_CREATED_CONTRACT_ADDRESS)
-  const { mutateAsync: mintNft } = useMintNFT(newFIRCollection)
+
+  const { contract: FIRCollection } = useContract(process.env.NEXT_PUBLIC_FIR_CONTRACT)
+  const { mutateAsync: mintNft, isSuccess, data: NFTReturnValue } = useMintNFT(FIRCollection)
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>()
 
@@ -44,20 +47,21 @@ const RegisterFIRForm = ({ complaint }: Props) => {
   }
 
   const onSubmit = handleSubmit(async (data) => {
-    // generate FIR id
-    const firId = generateRandomId();
+
+    const firId = complaint?.complaintId || generateRandomId()
 
     // create FIR metadata
     const firMetadata = {
       name: `Filing for ${data.name}`,
-      description: 'NEW FIR',
+      description: 'FILING FIR',
       image: FIR_THUMBNAIL,
       properties: {
         ...data,
         firId: firId,
+        status: 'New'
       }
     }
-
+    console.log('firMetadata', firMetadata)
     // create FIR 
     try {
       toast.loading('Creating FIR')
@@ -67,29 +71,30 @@ const RegisterFIRForm = ({ complaint }: Props) => {
       })
       toast.dismiss()
       toast.success('FIR created successfully')
+      console.log('NFTReturnValue', NFTReturnValue)
+      console.log('isSuccess', isSuccess)
+      if (isSuccess) {
+        const res = await fetch('/api/mailing', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ...data,
+            // @ts-ignore
+            tokenId: NFTReturnValue?.id?._hex.toString(),
+            firId: firId,
+            status: 'New'
+          })
+        })
+        console.log('res', res)
+        if (res.status === 200) {
+          toast.success('Mailed FIR to the victim successfully')
+        }
+      }
     } catch (error) {
       alert('Error minting FIR')
       console.log('error', error)
-    }
-
-    // mail FIR to victim and admin
-    try {
-      const res = await fetch('/api/mailing', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ...data,
-          firId: firId,
-          status: 'New'
-        })
-      })
-      if (res.status === 200) {
-        toast.success('Mailed FIR to the victim successfully')
-      }
-    } catch (err) {
-      alert('Something went wrong, please try again later')
     }
   })
 

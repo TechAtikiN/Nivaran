@@ -7,19 +7,19 @@ import Loading from '@/components/globals/Loading';
 
 const ComplaintListing = () => {
 
-  const { contract } = useContract('0x3f5469688063763A62d4962D0d12711131265795');
+  const { contract } = useContract(process.env.NEXT_PUBLIC_COMPLAINT_CONTRACT);
   const { data, isLoading } = useContractRead(contract, 'getAllComplaints')
 
   const complaints = data?.map((complaint: any, index: number) => {
     return {
-      complaintId: index + 1,
+      complaintId: complaint[3],
       walletAddress: complaint[1],
       name: complaint[2],
-      contact: complaint[3],
-      email: complaint[4],
-      address: complaint[5],
-      title: complaint[6],
-      description: complaint[7],
+      contact: complaint[4],
+      email: complaint[5],
+      address: complaint[6],
+      title: complaint[7],
+      description: complaint[8],
     }
   })
 

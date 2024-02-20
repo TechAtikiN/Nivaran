@@ -1,5 +1,5 @@
 // named imports
-import { useContract, useContractRead } from '@thirdweb-dev/react';
+import { useContract, useContractRead, useNFTs } from '@thirdweb-dev/react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useRouter } from 'next/navigation';
 import { useHandleComplaintStore } from '@/store/useUserStore';
@@ -9,25 +9,32 @@ import Loading from '@/components/globals/Loading';
 
 const ComplaintListing = () => {
 
-  const { contract } = useContract('0x3f5469688063763A62d4962D0d12711131265795');
-  const { data, isLoading } = useContractRead(contract, 'getAllComplaints')
+  const { contract } = useContract(process.env.NEXT_PUBLIC_COMPLAINT_CONTRACT as string);
+  const { data: complaintsCollection, isLoading } = useContractRead(contract, 'getAllComplaints')
   const router = useRouter()
 
-  const complaints = data?.map((complaint: any, index: number) => {
+  const { contract: FIRCollection } = useContract(process.env.NEXT_PUBLIC_FIR_CONTRACT)
+  const { data: FIRsData, isLoading: FIRsDataLoading } = useNFTs(FIRCollection)
+
+  const firIds = FIRsData?.map((fir: any) => fir?.metadata?.properties?.firId)
+
+  const complaints = complaintsCollection?.map((complaint: any, index: number) => {
     return {
-      complaintId: index + 1,
+      complaintId: complaint[3],
       walletAddress: complaint[1],
       name: complaint[2],
-      contact: complaint[3],
-      email: complaint[4],
-      address: complaint[5],
-      title: complaint[6],
-      description: complaint[7],
+      contact: complaint[4],
+      email: complaint[5],
+      address: complaint[6],
+      title: complaint[7],
+      description: complaint[8],
     }
   })
 
   const [complaint, setComplaint] = useHandleComplaintStore((state) => [state.complaint, state.setComplaint])
   if (isLoading) return <Loading />
+
+  console.log(complaint)
 
   return (
     <DashboardLayout>
@@ -52,7 +59,7 @@ const ComplaintListing = () => {
                   <AccordionItem value="item-1">
                     <AccordionTrigger>
                       <td className='table-data'>
-                        {complaint?.complaintId}
+                        {complaint?.complaintId.slice(0, 6)}...{complaint?.complaintId.slice(-6)}
                       </td>
                       <td className='table-data text-sm'>
                         <p>{complaint?.name}</p>
@@ -67,12 +74,20 @@ const ComplaintListing = () => {
                     <AccordionContent>
                       <div className='px-5 pt-2 space-y-2'>
                         <p className='text-xs px-10 text-center'><span className='font-semibold'>Description</span>: {complaint?.description}</p>
-                        <button
-                          onClick={() => {
-                            setComplaint(complaint)
-                            router.push('/police/listing')
-                          }}
-                          className='add-officer-btn ml-[420px] rounded-none text-xs'>File FIR</button>
+                        {firIds?.map(fir => fir).includes(complaint?.complaintId) ? (
+                          <p className='text-center text-green-600 font-semibold'>FIR Already filed.</p>
+                        ) : (
+                          <button
+                            onClick={
+                              () => {
+                                setComplaint(complaint)
+                                router.push('/police/listing')
+                              }}
+                            className='add-officer-btn ml-[420px] rounded-none text-xs'
+                          >
+                            File FIR
+                          </button>
+                        )}
                       </div>
                     </AccordionContent>
                   </AccordionItem>

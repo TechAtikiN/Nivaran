@@ -23,7 +23,7 @@ type FormValues = {
 const POLICE_THUMBNAIL = 'https://static.vecteezy.com/system/resources/thumbnails/000/242/730/small/police-officer-avatar-illustration.jpg'
 
 export function AddOfficerForm() {
-  const { contract: policeCollection } = useContract(process.env.NEXT_PUBLIC_POLICE_NFT_CONTRACT_ADDRESS)
+  const { contract: policeCollection } = useContract(process.env.NEXT_PUBLIC_POLICE_CONTRACT)
   const { mutateAsync: mintNft, isLoading: isMinting } = useMintNFT(policeCollection)
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>()
@@ -43,7 +43,7 @@ export function AddOfficerForm() {
         to: data.walletAddress,
         metadata: policeMetadata,
       })
-      toast.success('FIR created successfully')
+      toast.success('Officer created successfully')
     } catch (error) {
       alert('Error minting nft')
       console.log('error', error)

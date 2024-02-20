@@ -1,7 +1,12 @@
-import { useAddress, useContract, useMintNFT, useOwnedNFTs } from '@thirdweb-dev/react'
+// named imports
+import { useAddress, useContract, useMintNFT, useNFT, useOwnedNFTs, useSDK } from '@thirdweb-dev/react'
 import { useForm } from 'react-hook-form'
 import { DialogFooter } from '../ui/dialog'
 import { Button } from '../ui/button'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+
+// default imports
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -19,29 +24,21 @@ type FormValues = {
 const FIR_THUMBNAIL = 'https://e-gmat.com/blogs/wp-content/uploads/2021/04/f1-visa-documents.jpg'
 
 const UpdateFIRForm = ({ fir, selectedStatus }: Props) => {
-  const address = useAddress()
-  const { contract: pendingFIRCollection } = useContract(process.env.NEXT_PUBLIC_FIR_PENDING_CONTRACT_ADDRESS)
-  const { contract: resolvedFIRCollection } = useContract(process.env.NEXT_PUBLIC_FIR_RESOLVED_CONTRACT_ADDRESS)
-
-  const { mutateAsync: mintPendingNft } = useMintNFT(pendingFIRCollection)
-  const { mutateAsync: mintResolvedNft } = useMintNFT(resolvedFIRCollection)
-
-  const { data: pendingFIRsData } = useOwnedNFTs(pendingFIRCollection, address)
-  const { data: resolvedFIRsData } = useOwnedNFTs(resolvedFIRCollection, address)
-
-  let pendingFIRsMetadata: FIR[] = []
-  let resolvedFIRsMetadata: FIR[] = []
-
-  pendingFIRsData?.map(async (fir: any) => {
-    const data = fir.metadata
-    pendingFIRsMetadata.push(data)
-  })
-  resolvedFIRsData?.map(async (fir: any) => {
-    const data = fir.metadata
-    resolvedFIRsMetadata.push(data)
-  })
+  const router = useRouter()
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>()
+
+  const address = useAddress()
+  const tokenId = fir.id
+
+  const sdk = useSDK()
+
+  const { contract: FIRCollection } = useContract(process.env.NEXT_PUBLIC_FIR_CONTRACT)
+
+  const { data: nft, isLoading: isNFTLoading } = useNFT(
+    FIRCollection,
+    tokenId?.toString()
+  )
 
   const handleMailing = async (data: any, status: string, fir: FIR) => {
     try {
@@ -58,7 +55,8 @@ const UpdateFIRForm = ({ fir, selectedStatus }: Props) => {
         })
       })
       if (res.status === 200) {
-        toast.success('Information mailed successfully')
+        router.refresh()
+        toast.success('Status Updated Successfully')
       }
     } catch (err) {
       alert('Something went wrong, please try again later')
@@ -66,54 +64,129 @@ const UpdateFIRForm = ({ fir, selectedStatus }: Props) => {
   }
 
   const onSubmit = handleSubmit(async (data) => {
-    const firMetadata = {
-      name: `Filing for ${fir.properties.name}`,
-      description: 'NEW FIR',
-      image: FIR_THUMBNAIL,
-      properties: {
-        ...fir.properties,
-        description: data.description,
-        remark: data.remark,
-        documents: data.documents,
-      }
-    }
-
-    // check if the FIR with the same FIR number already exists, check from the data object and the pendingFIRsMetadata and resolvedFIRsMetadata
-    const alreadyExistsInPending = pendingFIRsMetadata.find((fir: FIR) => fir.properties.firId === firMetadata.properties.firId) ? true : false
-    const alreadyExistsInResolved = resolvedFIRsMetadata.find((fir: FIR) => fir.properties.firId === firMetadata.properties.firId) ? true : false
-
     try {
       if (data.status === 'Pending') {
-        if (alreadyExistsInPending) {
-          toast.error('FIR already exists in pending')
-          return
-        }
         toast.loading('Changing FIR status to pending')
-        await mintPendingNft({
-          to: address || '',
-          metadata: firMetadata,
-        })
+
+        const pendingFirMetadata = {
+          name: `Filing for ${fir.properties.name}`,
+          description: 'FILING FIR',
+          image: FIR_THUMBNAIL,
+          properties: {
+            // @ts-ignore
+            ...nft?.metadata?.properties,
+            status: data.status,
+            description: {
+              //@ts-ignore
+              new: nft?.metadata?.properties?.description,
+              pending: data.description,
+            },
+            remark: {
+              //@ts-ignore
+              new: nft?.metadata?.properties?.remark,
+              pending: data.remark,
+            },
+            documents: {
+              //@ts-ignore
+              new: nft?.metadata?.properties?.documents,
+              pending: data.documents,
+            }
+          }
+        }
+
+        const newPendingURI = await sdk!.storage.upload(pendingFirMetadata)
+
+        const updateNFT = await FIRCollection!.call("setTokenURI", [
+          tokenId,
+          newPendingURI,
+        ])
+
+        toast.success('FIR status changed to pending')
         handleMailing(data, 'Pending', fir)
         toast.dismiss()
-        toast.success('FIR status changed to pending')
-      } else {
-        if (alreadyExistsInResolved) {
-          toast.error('FIR is already resolved')
-          return
-        }
+      } else if (data.status === 'Resolved') {
         toast.loading('Changing FIR status to resolved')
-        await mintResolvedNft({
-          to: address || '',
-          metadata: firMetadata,
-        })
+
+        const resolvedFirMetadata = {
+          name: `Filing for ${fir.properties.name}`,
+          description: 'FILING FIR',
+          image: FIR_THUMBNAIL,
+          properties: {
+            // @ts-ignore
+            ...nft?.metadata?.properties,
+            status: data.status,
+            description: {
+              //@ts-ignore
+              new: nft?.metadata?.properties?.description.new,
+              // @ts-ignore
+              pending: nft?.metadata?.properties?.description.pending,
+              resolved: data.description,
+            },
+            remark: {
+              //@ts-ignore
+              new: nft?.metadata?.properties?.remark.new,
+              // @ts-ignore
+              pending: nft?.metadata?.properties?.remark.pending,
+              resolved: data.remark,
+            },
+            documents: {
+              //@ts-ignore
+              new: nft?.metadata?.properties?.documents.new,
+              // @ts-ignore
+              pending: nft?.metadata?.properties?.documents.pending,
+              resolved: data.documents,
+            }
+          }
+        }
+
+        const newResolvedURI = await sdk!.storage.upload(resolvedFirMetadata)
+        const updateNFT = await FIRCollection!.call("setTokenURI", [
+          tokenId,
+          newResolvedURI,
+        ])
+
+        toast.success('FIR status changed to resolved')
         handleMailing(data, 'Resolved', fir)
         toast.dismiss()
-        toast.success('FIR status changed to resolved')
       }
-    } catch (isError) {
+    } catch (error) {
       toast.dismiss()
+      console.log(error)
       toast.error('Error changing FIR status')
     }
+
+    // try {
+    //   if (data.status === 'Pending') {
+    //     // if (alreadyExistsInPending) {
+    //     //   toast.error('FIR already exists in pending')
+    //     //   return
+    //     // }
+    //     toast.loading('Changing FIR status to pending')
+    //     await mintPendingNft({
+    //       to: address || '',
+    //       metadata: firMetadata,
+    //     })
+    //     handleMailing(data, 'Pending', fir)
+    //     toast.dismiss()
+    //     toast.success('FIR status changed to pending')
+    //   } else {
+    //     if (alreadyExistsInResolved) {
+    //       toast.error('FIR is already resolved')
+    //       return
+    //     }
+    //     toast.loading('Changing FIR status to resolved')
+    //     await mintResolvedNft({
+    //       to: address || '',
+    //       metadata: firMetadata,
+    //     })
+    //     handleMailing(data, 'Resolved', fir)
+    //     toast.dismiss()
+    //     toast.success('FIR status changed to resolved')
+    //   }
+    // } catch (isError) {
+    //   toast.dismiss()
+    //   toast.error('Error changing FIR status')
+    // }
 
   })
 

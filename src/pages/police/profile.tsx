@@ -1,14 +1,21 @@
 import { useAuth } from '@/hooks/useAuth'
 import { userUserStore } from '@/store/useUserStore'
+import { useRouter } from 'next/router'
+import { useAddress } from '@thirdweb-dev/react'
 import { CheckBadgeIcon } from '@heroicons/react/24/solid'
 import DashboardLayout from '@/components/globals/DashboardLayout'
 import NotAuthorized from '@/components/globals/NotAuthorized'
 
 const ProfilePage = () => {
+  const router = useRouter()
+  const address = useAddress()
   const [role, userAddress, setRole] = userUserStore(state => [state.role, state.userAddress, state.setRole])
-  const isAuthenicated = useAuth(process.env.NEXT_PUBLIC_POLICE_NFT_CONTRACT_ADDRESS!, userAddress)
 
-  if (!isAuthenicated) return <NotAuthorized />
+  // if (!isAuthenicated) return <NotAuthorized />
+
+  if (address === undefined) {
+    router.push('/login')
+  }
 
   const features = [
     'Analyse criminal data',

@@ -5,19 +5,20 @@ import { adminNavLinks, policeNavLinks } from '../../constants/navLinks'
 import { ConnectWallet } from '@thirdweb-dev/react'
 import { userUserStore } from '@/store/useUserStore'
 import { useState } from 'react'
+import { useAuth } from '@/hooks/useAuth'
 
 // default imports
 import Link from 'next/link'
-import { useAuth } from '@/hooks/useAuth'
 import NotAuthorized from './NotAuthorized'
 
 const pacifico = Kanit({ weight: '400', subsets: ['latin'] })
 
 const Sidebar = () => {
   const [role, userAddress, setRole] = userUserStore(state => [state.role, state.userAddress, state.setRole])
-  const isAuthenicated = useAuth(process.env.NEXT_PUBLIC_POLICE_NFT_CONTRACT_ADDRESS!, userAddress)
-  const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  console.log(role)
+  const pathname = usePathname()
 
   const handleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed)
