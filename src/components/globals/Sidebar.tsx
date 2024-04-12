@@ -25,7 +25,7 @@ const Sidebar = () => {
   }
 
   return (
-    <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-150 ease-in-out bg-[#191825] text-white h-screen flex flex-col justify-between py-3`}>
+    <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} h-screen transition-all duration-150 ease-in-out bg-[#191825] text-white flex flex-col justify-between py-3`}>
 
       <div>
         {/* Sidebar header */}

@@ -61,7 +61,6 @@ const RegisterFIRForm = ({ complaint }: Props) => {
         status: 'New'
       }
     }
-    console.log('firMetadata', firMetadata)
     // create FIR 
     try {
       toast.loading('Creating FIR')
@@ -71,27 +70,25 @@ const RegisterFIRForm = ({ complaint }: Props) => {
       })
       toast.dismiss()
       toast.success('FIR created successfully')
-      console.log('NFTReturnValue', NFTReturnValue)
-      console.log('isSuccess', isSuccess)
-      if (isSuccess) {
-        const res = await fetch('/api/mailing', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            ...data,
-            // @ts-ignore
-            tokenId: NFTReturnValue?.id?._hex.toString(),
-            firId: firId,
-            status: 'New'
-          })
+
+      const res = await fetch('/api/mailing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...data,
+          // @ts-ignore
+          tokenId: NFTReturnValue?.id?._hex.toString(),
+          firId: firId,
+          status: 'New'
         })
-        console.log('res', res)
-        if (res.status === 200) {
-          toast.success('Mailed FIR to the victim successfully')
-        }
+      })
+      console.log('res', res)
+      if (res.status === 200) {
+        toast.success('Mailed FIR to the victim successfully')
       }
+
     } catch (error) {
       alert('Error minting FIR')
       console.log('error', error)

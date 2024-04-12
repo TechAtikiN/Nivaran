@@ -37,9 +37,9 @@ const OfficerCard: React.FC<OfficerProps> = ({ officer, image }) => {
             <AddPermission walletAddress={officer.properties.walletAddress} />
           </Dialog>
 
-          <Link href={`/admin/listing/${officer.properties.id}`}>
+          {/* <Link href={`/admin/listing/${officer.properties.id}`}>
             <button className='add-officer-btn'>View Profile</button>
-          </Link>
+          </Link> */}
         </div>
       </div>
     </div>

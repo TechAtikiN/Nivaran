@@ -1,7 +1,5 @@
 // named imports
-import { useEffect, useState } from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import { NFT, useAddress, useContract } from '@thirdweb-dev/react'
+import { useAddress } from '@thirdweb-dev/react'
 import { useRouter } from 'next/router'
 
 // default imports
@@ -12,7 +10,9 @@ const FIRListing = () => {
   const address = useAddress()
   const router = useRouter()
 
-  if (address === undefined) {
+  if (typeof window === 'undefined') return null
+
+  if (address && address === undefined) {
     router.push('/login')
   }
 

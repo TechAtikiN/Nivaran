@@ -1,7 +1,7 @@
 
 // named imports
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/router'
 import { userUserStore } from '@/store/useUserStore'
 import { useAddress, useContract, useOwnedNFTs } from '@thirdweb-dev/react'
 
@@ -24,7 +24,6 @@ export default function Home() {
   // define contracts for police and citizen NFTs
   const { contract: policeCollection } = useContract(process.env.NEXT_PUBLIC_POLICE_CONTRACT)
   const { data: policeAccessNFTs, isLoading: policeAccessDataLoading } = useOwnedNFTs(policeCollection, address)
-
 
   // set role based on address
   useEffect(() => {
@@ -54,5 +53,4 @@ export default function Home() {
   if (role === Role.POLICE) {
     router.push('/police')
   }
-
 }

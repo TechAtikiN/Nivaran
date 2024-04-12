@@ -18,7 +18,6 @@ export default async function handler(req, res) {
 
     if (status === "New") {
         adminMailFormattedHtml = `<h2>Created new FIR with ID: ${firId}</h2>
-            <p><strong>Token ID (You can use this to view the status of your FIR): </strong> ${tokenId}</p>
             <p><strong>Email:</strong> ${email}</p>
             <p><strong>Remark:</strong> ${remark}</p>`;
     } else if (status === "Pending" || "Resolved") {
@@ -34,7 +33,6 @@ export default async function handler(req, res) {
         victimMailFormattedHtml = `
     <h2>Thank you for contacting us!</h2>
     <p>Your FIR has been successfully registered with ID: ${firId}</p>
-    <p><strong>Token ID (You can use this to view the status of your FIR): </strong> ${tokenId}</p>
     <p><strong>Email:</strong> ${email}</p>`;
     } else if (status === "Pending" || "Resolved") {
         victimMailFormattedHtml = `

@@ -52,7 +52,7 @@ const ComplaintListing = () => {
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className=''>
             {complaints?.map((complaint: Complaint, index: number) => (
               <tr className={`w-full border-l border-gray-300 hover:cursor-pointer ${index % 2 === 1 ? 'bg-sky-50' : 'bg-white'} text-sm border-b border-gray-300`} key={complaint?.complaintId}>
                 <Accordion key={index} type="single" collapsible>

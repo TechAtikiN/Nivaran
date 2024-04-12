@@ -41,34 +41,36 @@ const ComplaintListing = () => {
             </tr>
           </thead>
 
-          <tbody className='h-[10px] overflow-x-auto overflow-y-scroll'>
-            {complaints?.map((complaint: Complaint, index: number) => (
-              <tr className={`w-full border-l border-gray-300 hover:cursor-pointer ${index % 2 === 1 ? 'bg-sky-50' : 'bg-white'} text-sm border-b border-gray-300`} key={complaint?.complaintId}>
-                <Accordion key={index} type="single" collapsible>
-                  <AccordionItem value="item-1">
-                    <AccordionTrigger>
-                      <td className='table-data'>
-                        {complaint?.complaintId}
-                      </td>
-                      <td className='table-data text-sm'>
-                        <p>{complaint?.name}</p>
-                        <p className='text-xs'>{complaint?.email}</p>
-                      </td>
-                      <td className='table-data '>{complaint?.contact}</td>
-                      <td className='table-data '>{complaint?.title}</td>
-                      <td className='table-data '>
-                        {complaint?.walletAddress.slice(0, 6)}...{complaint?.walletAddress.slice(-6)}
-                      </td>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className='px-5 pt-2 space-y-2'>
-                        <p className='text-xs px-10 text-center'><span className='font-semibold'>Description</span>: {complaint?.description}</p>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </tr>
-            ))}
+          <tbody className=''>
+            <div className='h-[550px] overflow-x-auto overflow-y-scroll'>
+              {complaints?.map((complaint: Complaint, index: number) => (
+                <tr className={`w-full border-l border-gray-300 hover:cursor-pointer ${index % 2 === 1 ? 'bg-sky-50' : 'bg-white'} text-sm border-b border-gray-300`} key={complaint?.complaintId}>
+                  <Accordion key={index} type="single" collapsible>
+                    <AccordionItem value="item-1">
+                      <AccordionTrigger>
+                        <td className='table-data'>
+                          {complaint?.complaintId}
+                        </td>
+                        <td className='table-data text-sm'>
+                          <p>{complaint?.name}</p>
+                          <p className='text-xs'>{complaint?.email}</p>
+                        </td>
+                        <td className='table-data '>{complaint?.contact}</td>
+                        <td className='table-data '>{complaint?.title}</td>
+                        <td className='table-data '>
+                          {complaint?.walletAddress.slice(0, 6)}...{complaint?.walletAddress.slice(-6)}
+                        </td>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className='px-5 pt-2 space-y-2'>
+                          <p className='text-xs px-10 text-center'><span className='font-semibold'>Description</span>: {complaint?.description}</p>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </tr>
+              ))}
+            </div>
           </tbody>
         </table>
 
